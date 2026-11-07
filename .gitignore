@@ -1,0 +1,19 @@
+# Local testing settings, never committed.
+.claude/
+
+# Only app code goes in this repository. Never commit photos, scans or PDFs.
+*.jpg
+*.jpeg
+*.png
+*.heic
+*.heif
+*.webp
+*.gif
+*.bmp
+*.tif
+*.tiff
+*.pdf
+
+# The app icons are the one exception.
+!icons/icon-192.png
+!icons/icon-512.png
