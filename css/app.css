@@ -32,6 +32,8 @@ html, body {
   font-family: var(--brand-font);
   font-size: 20px;
   line-height: 1.4;
+  /* No pull-to-refresh or rubber-band dragging; the app updates itself. */
+  overscroll-behavior-y: none;
 }
 
 .screen {
