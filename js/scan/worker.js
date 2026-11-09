@@ -9,6 +9,7 @@ const DETECT_MAX = 1000; // longest side used for finding the edges
 const OUT_MAX_W = 2000;  // brief: pages about 2,000 px wide at most
 const OUT_MAX_H = 3000;
 const JPEG_QUALITY = 0.8;
+const INSET = 0.01;      // pull found corners in by 1% so no background shows
 
 let cvReady = null;
 
@@ -100,7 +101,9 @@ function findCorners(cv, src) {
   const edges = new cv.Mat();
   cv.Canny(gray, edges, 50, 150);
   const kernel = cv.Mat.ones(3, 3, cv.CV_8U);
-  cv.dilate(edges, edges, kernel, new cv.Point(-1, -1), 2);
+  // Close (thicken then thin again) to join broken outlines without pushing
+  // the border outward onto the background.
+  cv.morphologyEx(edges, edges, cv.MORPH_CLOSE, kernel, new cv.Point(-1, -1), 2);
   // 2) Brightness split (works well for white paper on a dark surface).
   const bright = new cv.Mat();
   cv.threshold(gray, bright, 0, 255, cv.THRESH_BINARY + cv.THRESH_OTSU);
@@ -115,7 +118,15 @@ function findCorners(cv, src) {
     mask.delete();
   }
   if (!best) return null;
-  return orderCorners(best.points.map((p) => ({ x: p.x / s, y: p.y / s })));
+  return insetCorners(orderCorners(best.points.map((p) => ({ x: p.x / s, y: p.y / s }))));
+}
+
+// Moves each corner towards the page's centre by INSET of the page's size.
+function insetCorners(pts) {
+  const cx = pts.reduce((sum, p) => sum + p.x, 0) / 4;
+  const cy = pts.reduce((sum, p) => sum + p.y, 0) / 4;
+  const k = 1 - INSET * 2; // 1% of the full width = 2% of the half-width
+  return pts.map((p) => ({ x: cx + (p.x - cx) * k, y: cy + (p.y - cy) * k }));
 }
 
 function largestQuad(cv, mask, imageArea) {

@@ -21,6 +21,9 @@ const APP_FILES = [
   'js/share/share.js',
   'icons/icon-192.png',
   'icons/icon-512.png',
+  'icons/icon-maskable-512.png',
+  'icons/logo.svg',
+  'fonts/figtree.woff2',
 ];
 
 // The libraries are big (OpenCV is about 10 MB) and rarely change, so they

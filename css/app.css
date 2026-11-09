@@ -1,6 +1,20 @@
+/* Pocket family font: Figtree, all weights in one small file (SIL OFL). */
+@font-face {
+  font-family: "Figtree";
+  src: url("../fonts/figtree.woff2") format("woff2");
+  font-weight: 300 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
+  /* Pocket family brand. Shared by every Pocket app. */
+  --brand-teal: #0F6E56;
+  --brand-pale: #9FE1CB;
+  --brand-font: "Figtree", system-ui, sans-serif;
+
   --bg: #F7F6F2;
-  --teal: #0F766E;
+  --teal: var(--brand-teal);
   --text: #1F2937;
   --red: #B91C1C;
   --white: #FFFFFF;
@@ -8,12 +22,14 @@
 
 * { box-sizing: border-box; }
 
+button, input { font-family: inherit; }
+
 html, body {
   margin: 0;
   height: 100%;
   background: var(--bg);
   color: var(--text);
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-family: var(--brand-font);
   font-size: 20px;
   line-height: 1.4;
 }
@@ -117,7 +133,7 @@ html, body {
 .spinner {
   width: 72px;
   height: 72px;
-  border: 8px solid #CDE7E4;
+  border: 8px solid var(--brand-pale);
   border-top-color: var(--teal);
   border-radius: 50%;
   animation: spin 1s linear infinite;
@@ -140,3 +156,26 @@ html, body {
   background: var(--white);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
 }
+
+/* ---- Pocket family brand (logo tile + wordmark) ---- */
+
+.brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding-top: 8px;
+}
+.brand-logo {
+  width: 88px;
+  height: 88px;
+}
+.wordmark {
+  margin: 0;
+  font-size: 40px;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.5px;
+  color: var(--text);
+}
+.wordmark-accent { color: var(--brand-teal); }

@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Pocket PDF logo">
+  <!-- Pocket family logo.
+       Shared by every Pocket app: the tile (size, corner radius, colour).
+       Changes per app: only the <g id="symbol"> group. Keep it within
+       180 px of the centre (256, 256) so Android's icon masks never clip it. -->
+  <rect id="tile" width="512" height="512" rx="112" fill="#0F6E56"/>
+  <g id="symbol">
+    <!-- white page with folded top-right corner -->
+    <path d="M168 120 H300 L352 172 V392 H168 Z" fill="#FFFFFF"/>
+    <path d="M300 120 L352 172 H300 Z" fill="#9FE1CB"/>
+    <!-- three short lines of text -->
+    <rect x="200" y="226" width="120" height="16" rx="8" fill="#0F6E56"/>
+    <rect x="200" y="270" width="120" height="16" rx="8" fill="#0F6E56"/>
+    <rect x="200" y="314" width="76" height="16" rx="8" fill="#0F6E56"/>
+  </g>
+</svg>

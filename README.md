@@ -67,5 +67,26 @@ Delete these yourself if you need to:
 | `js/pdf/build.js` | Makes the PDF |
 | `js/share/share.js` | Opens the Android share menu |
 | `vendor/` | Two libraries, OpenCV.js 4.9.0 (page finding, about 10 MB) and jsPDF 4.2.1 (PDF making), with their licences |
-| `icons/` | The app icon (the only images allowed here) |
+| `icons/` | The logo and app icons (the only images allowed here) |
+| `fonts/` | The Figtree font and its licence |
+| `tools/make-icons.js` | Makes the app icons from the logo (run on your computer, not part of the app) |
 | `.gitignore` | Stops photos and PDFs being committed |
+
+## Reusing the brand for another Pocket app
+
+- **Logo:** copy `icons/logo.svg`. Keep the tile, and replace only the
+  `<g id="symbol">` group with the new app's symbol.
+- **Wordmark:** in `index.html`, change only the word inside
+  `<span class="wordmark-accent">`.
+- **Colours, font and styles:** copy the `fonts/` folder, the font and
+  `--brand-*` lines at the top of `css/app.css`, and the "Pocket family brand"
+  block at the end of it. The font is Figtree (20 KB, free to use and share,
+  licence in `fonts/`).
+- **Icons:** copy the `tools/` folder, then run this on your computer
+  (it needs Node and Chrome or Edge):
+
+  ```
+  node tools/make-icons.js
+  ```
+
+  It makes the three home-screen icons in `icons/` from `logo.svg`.
