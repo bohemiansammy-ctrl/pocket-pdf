@@ -4,7 +4,7 @@
 import { warmUp, findPage, straighten, discardPhoto } from './scan/scan.js';
 import { openAdjust, getCorners, layout as layoutAdjust } from './screens/adjust.js';
 import {
-  pages, putPage, selectedIndex, imageFor, allReady, withUrl, setPageHooks, render as renderPages,
+  pages, putPage, selectedIndex, imageFor, allReady, setPageHooks, render as renderPages,
 } from './screens/pages.js';
 import { buildPdf } from './pdf/build.js';
 import { sharePdf } from './share/share.js';
@@ -70,11 +70,13 @@ const ADJUST_TIP = 'Drag the dots to the corners of the page.';
 // its position in the pages (the end for a new page, or the page being
 // retaken or edited), and the photo itself.
 let target = 0;
+let editing = false; // true when the photo came from Edit rather than the camera
 let photo = null;
 let adjustUrl = null;
 
 function openCamera(index) {
   target = index;
+  editing = false;
   showMessage('');
   showPagesNote('');
   warmUp(); // load the edge finder while the camera is open
@@ -106,6 +108,7 @@ $('camera').addEventListener('change', async (e) => {
 // Edit: reopen the selected page's photo with its corners where you left them.
 $('edit-btn').addEventListener('click', async () => {
   target = selectedIndex();
+  editing = true;
   const page = pages[target];
   showWorking('Opening the photo…', false);
   try {
@@ -155,8 +158,9 @@ $('accept-btn').addEventListener('click', async () => {
     putPage(target, {
       source: photo,
       corners,
-      colour: withUrl(straight),
-      bw: null,
+      straight,
+      // Edit keeps the page's turn; a retake starts upright.
+      rotation: editing && replacing ? replacing.rotation : 0,
       mode: replacing ? replacing.mode : 'colour',
     });
     photo = null;

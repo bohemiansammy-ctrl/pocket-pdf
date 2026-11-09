@@ -60,12 +60,30 @@
     <div id="thumbs" class="thumbs" role="list" aria-label="Pages"></div>
     <div class="preview-box">
       <img id="preview" class="preview" alt="The selected page">
-      <p id="preview-busy" class="preview-busy" hidden>Making black and white…</p>
+      <p id="preview-busy" class="preview-busy" hidden></p>
+      <!-- Rotate: broken circle with an arrow, turning clockwise. -->
+      <button id="rotate-btn" class="icon-btn rotate-btn" type="button" aria-label="Rotate page clockwise">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M18.06 8.5 A7 7 0 1 1 12 5" />
+          <path d="M9.5 2 L13 5 L9.5 8" />
+        </svg>
+      </button>
     </div>
-    <div class="mode-toggle">
-      <span id="mode-label" class="toggle-label">Colour</span>
-      <button id="mode-toggle" class="switch" type="button" role="switch" aria-checked="true"
-        aria-labelledby="mode-label"><span class="switch-knob"></span></button>
+    <div class="page-bar">
+      <div class="mode-toggle">
+        <span id="mode-label" class="toggle-label">Colour</span>
+        <button id="mode-toggle" class="switch" type="button" role="switch" aria-checked="true"
+          aria-labelledby="mode-label"><span class="switch-knob"></span></button>
+      </div>
+      <!-- Share: the standard three-connected-dots symbol. -->
+      <button id="share-btn" class="icon-btn share-btn" type="button" aria-label="Share PDF">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M8.6 10.7 L15.4 6.8 M8.6 13.3 L15.4 17.2" />
+          <circle cx="18" cy="5.5" r="2.8" />
+          <circle cx="6" cy="12" r="2.8" />
+          <circle cx="18" cy="18.5" r="2.8" />
+        </svg>
+      </button>
     </div>
     <div class="button-grid">
       <button id="edit-btn" class="btn-secondary" type="button">Edit</button>
@@ -73,7 +91,6 @@
       <button id="add-btn" class="btn-secondary" type="button">Add Page</button>
       <button id="delete-btn" class="btn-delete" type="button">Delete</button>
     </div>
-    <button id="share-btn" class="btn-primary" type="button">Share PDF</button>
   </main>
 
   <div id="update-banner" class="banner" role="alert" hidden>

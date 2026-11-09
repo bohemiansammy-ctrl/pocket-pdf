@@ -4,6 +4,7 @@
 // In:  { id, type: 'find', file }          Out: { id, ok, found, corners, preview }
 //      { id, type: 'straighten', corners } Out: { id, ok, jpeg, width, height }
 //      { id, type: 'bw', jpeg }            Out: { id, ok, jpeg, width, height }
+//      { id, type: 'rotate', jpeg, degrees } Out: { id, ok, jpeg, width, height }
 //      { type: 'discard' }                 (no reply)
 // Errors come back as { id, ok: false, error }.
 
@@ -51,6 +52,7 @@ const jobs = {
   find: (msg) => findPage(msg.file),
   straighten: (msg) => straighten(msg.corners),
   bw: (msg) => blackAndWhite(msg.jpeg),
+  rotate: (msg) => rotate(msg.jpeg, msg.degrees),
 };
 
 self.onmessage = async (event) => {
@@ -123,6 +125,22 @@ async function straighten(corners) {
   out.delete();
   const jpeg = await outCanvas.convertToBlob({ type: 'image/jpeg', quality: JPEG_QUALITY });
   return { jpeg, ...size };
+}
+
+// Turns a page clockwise by 90, 180 or 270 degrees.
+async function rotate(jpeg, degrees) {
+  const bmp = await createImageBitmap(jpeg);
+  const sideways = degrees % 180 !== 0;
+  const w = sideways ? bmp.height : bmp.width;
+  const h = sideways ? bmp.width : bmp.height;
+  const canvas = new OffscreenCanvas(w, h);
+  const ctx = canvas.getContext('2d');
+  ctx.translate(w / 2, h / 2);
+  ctx.rotate((degrees * Math.PI) / 180);
+  ctx.drawImage(bmp, -bmp.width / 2, -bmp.height / 2);
+  bmp.close();
+  const out = await canvas.convertToBlob({ type: 'image/jpeg', quality: JPEG_QUALITY });
+  return { jpeg: out, width: w, height: h };
 }
 
 // Makes the photocopy look from a straightened page: white paper, dark text,

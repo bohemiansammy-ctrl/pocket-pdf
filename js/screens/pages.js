@@ -1,15 +1,20 @@
 // Pages screen: the pages in order as thumbnails, a big view of the selected
-// page, and its controls (the Colour toggle, Delete).
+// page, and its controls (Rotate, the Colour toggle, Delete).
 //
 // Each page: {
-//   source,   the original photo (kept so Edit can re-crop it)
-//   corners,  where its corners were placed on that photo
-//   colour,   the straightened page   { jpeg, width, height, url }
-//   bw,       black-and-white version, made when first asked for (or null)
-//   mode,     'colour' or 'bw'
+//   source,      the original photo (kept so Edit can re-crop it)
+//   corners,     where its corners were placed on that photo
+//   colourBase,  the straightened page, upright as photographed { jpeg, width, height }
+//   bwBase,      its black-and-white version, made when first needed (or null)
+//   rotation,    0, 90, 180 or 270 degrees clockwise
+//   colour, bw,  the versions shown and used in the PDF, turned by `rotation`
+//                { jpeg, width, height, url }
+//   mode,        'colour' or 'bw'
 // }
+// Turned versions are always made from the bases, so rotating many times
+// never blurs the page.
 
-import { blackAndWhite } from '../scan/scan.js';
+import { blackAndWhite, rotateImage } from '../scan/scan.js';
 
 const $ = (id) => document.getElementById(id);
 const thumbs = $('thumbs');
@@ -38,7 +43,7 @@ export function imageFor(page) {
   return page.mode === 'bw' && page.bw ? page.bw : page.colour;
 }
 
-// Resolves once every black-and-white version that's being made is ready.
+// Resolves once every page's rotation and black-and-white work is done.
 export function allReady() {
   return Promise.all(pages.map((p) => p.making));
 }
@@ -46,7 +51,21 @@ export function allReady() {
 export const withUrl = (img) => ({ ...img, url: URL.createObjectURL(img.jpeg) });
 
 // Adds a page at the end (index = number of pages) or replaces one in place.
-export function putPage(index, page) {
+// `straight` is the newly straightened image; `rotation` and `mode` carry
+// over when a page is edited.
+export function putPage(index, { source, corners, straight, rotation = 0, mode = 'colour' }) {
+  const page = {
+    source,
+    corners,
+    colourBase: straight,
+    bwBase: null,
+    rotation,
+    colour: withUrl(straight),
+    colourTurn: 0,
+    bw: null,
+    bwTurn: null,
+    mode,
+  };
   if (index < pages.length) {
     release(pages[index]);
     pages[index] = page;
@@ -54,7 +73,7 @@ export function putPage(index, page) {
     pages.push(page);
   }
   selected = Math.min(index, pages.length - 1);
-  if (page.mode === 'bw') makeBlackAndWhite(page);
+  if (page.rotation || page.mode === 'bw') updateLooks(page, page.rotation ? 'Turning the page…' : 'Making black and white…');
   render();
   hooks.changed();
 }
@@ -70,27 +89,60 @@ function showNote(text) {
   note.hidden = !text;
 }
 
-// ---- Colour / Black and white ----
+// ---- Rotation and black and white ----
+// Work for a page runs one job at a time, in order, so quick taps always
+// end up right.
 
-function makeBlackAndWhite(page) {
-  if (page.bw || page.making) return page.making;
-  page.making = (async () => {
-    try {
-      const bw = await blackAndWhite(page.colour.jpeg);
-      if (page.gone) return;
-      page.bw = withUrl(bw);
-    } catch (err) {
-      console.error(err);
-      page.mode = 'colour';
-      showNote("Couldn't make the black and white version. Please try again.");
-    } finally {
-      page.making = null;
-    }
+function updateLooks(page, busyText) {
+  page.busyText = busyText;
+  const job = (page.making || Promise.resolve()).then(() => bringUpToDate(page));
+  page.making = job;
+  job.then(() => {
+    if (page.making !== job) return; // more work queued behind this
+    page.making = null;
+    if (page.gone) return;
     render();
     hooks.changed();
-  })();
+  });
   render();
-  return page.making;
+}
+
+async function bringUpToDate(page) {
+  try {
+    if (page.colourTurn !== page.rotation) {
+      const turn = page.rotation;
+      const img = turn ? await rotateImage(page.colourBase.jpeg, turn) : page.colourBase;
+      if (page.gone) return;
+      swap(page, 'colour', img);
+      page.colourTurn = turn;
+    }
+    if (page.mode === 'bw') {
+      if (!page.bwBase) {
+        page.bwBase = await blackAndWhite(page.colourBase.jpeg);
+        if (page.gone) return;
+      }
+      if (page.bwTurn !== page.rotation) {
+        const turn = page.rotation;
+        const img = turn ? await rotateImage(page.bwBase.jpeg, turn) : page.bwBase;
+        if (page.gone) return;
+        swap(page, 'bw', img);
+        page.bwTurn = turn;
+      }
+    }
+  } catch (err) {
+    console.error(err);
+    if (page.mode === 'bw' && !page.bwBase) {
+      page.mode = 'colour';
+      showNote("Couldn't make the black and white version. Please try again.");
+    } else {
+      showNote("Couldn't turn the page. Please try again.");
+    }
+  }
+}
+
+function swap(page, key, img) {
+  if (page[key]) URL.revokeObjectURL(page[key].url);
+  page[key] = withUrl(img);
 }
 
 function setMode(mode) {
@@ -98,7 +150,7 @@ function setMode(mode) {
   if (!page || page.mode === mode) return;
   showNote('');
   page.mode = mode;
-  if (mode === 'bw') makeBlackAndWhite(page);
+  if (mode === 'bw') updateLooks(page, 'Making black and white…');
   render();
   hooks.changed();
 }
@@ -110,6 +162,15 @@ function toggleMode() {
 
 modeToggle.addEventListener('click', toggleMode);
 $('mode-label').addEventListener('click', toggleMode); // tapping the word works too
+
+// Rotate: each tap turns the selected page a quarter turn clockwise.
+$('rotate-btn').addEventListener('click', () => {
+  const page = pages[selected];
+  if (!page) return;
+  showNote('');
+  page.rotation = (page.rotation + 90) % 360;
+  updateLooks(page, 'Turning the page…');
+});
 
 // ---- Delete (tap twice, so one stray tap can't lose a page) ----
 
@@ -173,6 +234,7 @@ export function render() {
   preview.src = imageFor(page).url;
   preview.alt = `Page ${selected + 1}`;
   busy.hidden = !page.making;
+  busy.textContent = page.busyText || '';
   modeToggle.setAttribute('aria-checked', String(page.mode === 'colour'));
   modeToggle.disabled = !!page.making;
 }

@@ -55,6 +55,11 @@ export function blackAndWhite(jpeg) {
   return ask({ type: 'bw', jpeg });
 }
 
+// Turns a page clockwise by 90, 180 or 270 degrees. Resolves to { jpeg, width, height }.
+export function rotateImage(jpeg, degrees) {
+  return ask({ type: 'rotate', jpeg, degrees });
+}
+
 // Forgets the current photo (e.g. after Retake).
 export function discardPhoto() {
   if (worker) worker.postMessage({ type: 'discard' });

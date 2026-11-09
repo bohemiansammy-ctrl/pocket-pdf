@@ -65,7 +65,7 @@ Delete these yourself if you need to:
 | `js/app.js` | The screens and buttons |
 | `js/scan/` | Finds the page in the photo and straightens it |
 | `js/screens/adjust.js` | The Adjust screen: the photo with draggable corner dots and edge handles |
-| `js/screens/pages.js` | The Pages screen: thumbnails, the Colour toggle, Delete |
+| `js/screens/pages.js` | The Pages screen: thumbnails, Rotate, the Colour toggle, Delete |
 | `js/pdf/build.js` | Makes the PDF |
 | `js/share/share.js` | Opens the Android share menu |
 | `vendor/` | Two libraries, OpenCV.js 4.9.0 (page finding, about 10 MB) and jsPDF 4.2.1 (PDF making), with their licences |

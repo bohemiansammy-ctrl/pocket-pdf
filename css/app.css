@@ -434,6 +434,7 @@ html, body {
 #pages > .btn-secondary,
 #pages > .btn-primary { flex-shrink: 0; }
 #pages .button-grid,
+#pages .page-bar,
 #pages .mode-toggle { flex-shrink: 0; }
 
 /* Colour toggle: a standard on/off switch. On (teal) = colour, off = black and white. */
@@ -492,4 +493,54 @@ html, body {
   font-size: 20px;
   text-align: center;
   color: #6B7280;
+}
+
+/* Colour toggle on the left, Share on the right, in one row. */
+.page-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.page-bar .mode-toggle { justify-content: flex-start; }
+
+/* Round icon buttons (Share, Rotate). Icons are drawn as lines in currentColor. */
+.icon-btn {
+  display: grid;
+  place-items: center;
+  width: 60px;
+  height: 60px;
+  padding: 0;
+  border-radius: 50%;
+  cursor: pointer;
+}
+.icon-btn svg {
+  width: 30px;
+  height: 30px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.icon-btn:active { filter: brightness(0.9); }
+
+/* Share: the main action, so solid teal. */
+.share-btn {
+  border: 0;
+  background: var(--teal);
+  color: var(--white);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+.share-btn svg circle { fill: currentColor; }
+
+/* Rotate: sits in the bottom-right corner of the selected page's preview. */
+.rotate-btn {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  border: 3px solid var(--teal);
+  background: var(--white);
+  color: var(--teal);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
