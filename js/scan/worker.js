@@ -40,8 +40,9 @@ function loadCv() {
   return cvReady;
 }
 
-// The current photo, kept between "find" and "straighten" so it is only
-// decoded once: { src: cv.Mat, w, h }.
+// The current photo: { src: cv.Mat, w, h }. Kept until the next photo or a
+// discard (Retake / Rescan), so it is decoded once and Edit can straighten
+// it again with new corners.
 let current = null;
 
 self.onmessage = async (event) => {
@@ -112,7 +113,6 @@ async function straighten(corners) {
   );
   const size = { width: out.cols, height: out.rows };
   out.delete();
-  discard(); // free the memory; the next scan brings a new photo
   const jpeg = await outCanvas.convertToBlob({ type: 'image/jpeg', quality: JPEG_QUALITY });
   return { jpeg, ...size };
 }

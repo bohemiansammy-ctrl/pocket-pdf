@@ -129,8 +129,17 @@ $('share-btn').addEventListener('click', async () => {
   }
 });
 
-$('again-btn').addEventListener('click', () => {
+// Edit: back to the same photo, with the dots and edges where you left them.
+$('edit-btn').addEventListener('click', () => {
+  setAdjustNote(ADJUST_TIP, false);
+  show('adjust');
+  layoutAdjust();
+});
+
+// Rescan: forget this photo and take a fresh one.
+$('rescan-btn').addEventListener('click', () => {
   pdfBlob = null;
+  discardPhoto();
   show('home');
   openCamera();
 });
