@@ -1,10 +1,11 @@
-// Background worker: finds the page in a photo and straightens it.
-// Runs off the main thread so the screen never freezes.
+// Background worker: finds the page in a photo, straightens it, and makes the
+// black-and-white version. Runs off the main thread so the screen never freezes.
 //
-// In:  { type: 'find', file }              Out: { ok, found, corners, preview }
-//      { type: 'straighten', corners }     Out: { ok, jpeg, width, height }
+// In:  { id, type: 'find', file }          Out: { id, ok, found, corners, preview }
+//      { id, type: 'straighten', corners } Out: { id, ok, jpeg, width, height }
+//      { id, type: 'bw', jpeg }            Out: { id, ok, jpeg, width, height }
 //      { type: 'discard' }                 (no reply)
-// Errors come back as { ok: false, error }.
+// Errors come back as { id, ok: false, error }.
 
 const WORK_MAX = 3000;   // longest side of the working copy of the photo
 const DETECT_MAX = 1000; // longest side used for finding the edges
@@ -13,6 +14,8 @@ const OUT_MAX_W = 2000;  // brief: pages about 2,000 px wide at most
 const OUT_MAX_H = 3000;
 const JPEG_QUALITY = 0.8;
 const INSET = 0.01;      // pull found corners in by 1% so no background shows
+const BW_BLACK = 100;    // black and white: this dark (after shadow removal) or darker becomes black
+const BW_WHITE = 215;    // ...and this light or lighter becomes white (removes grey haze)
 
 let cvReady = null;
 
@@ -40,10 +43,15 @@ function loadCv() {
   return cvReady;
 }
 
-// The current photo: { src: cv.Mat, w, h }. Kept until the next photo or a
-// discard (Retake / Rescan), so it is decoded once and Edit can straighten
-// it again with new corners.
+// The current photo: { src: cv.Mat, w, h }. Kept from "find" until the next
+// photo or a discard, so it is decoded once even if straightened again.
 let current = null;
+
+const jobs = {
+  find: (msg) => findPage(msg.file),
+  straighten: (msg) => straighten(msg.corners),
+  bw: (msg) => blackAndWhite(msg.jpeg),
+};
 
 self.onmessage = async (event) => {
   const msg = event.data;
@@ -56,10 +64,10 @@ self.onmessage = async (event) => {
     return;
   }
   try {
-    const result = msg.type === 'find' ? await findPage(msg.file) : await straighten(msg.corners);
-    self.postMessage({ ok: true, ...result });
+    const result = await jobs[msg.type](msg);
+    self.postMessage({ id: msg.id, ok: true, ...result });
   } catch (e) {
-    self.postMessage({ ok: false, error: String(e && e.message || e) });
+    self.postMessage({ id: msg.id, ok: false, error: String(e && e.message || e) });
   }
 };
 
@@ -115,6 +123,62 @@ async function straighten(corners) {
   out.delete();
   const jpeg = await outCanvas.convertToBlob({ type: 'image/jpeg', quality: JPEG_QUALITY });
   return { jpeg, ...size };
+}
+
+// Makes the photocopy look from a straightened page: white paper, dark text,
+// shadows and grey cast removed.
+//  1. Work out how bright the bare paper is everywhere (blur away the text).
+//  2. Divide by that, so shadows and tints cancel out and paper becomes white.
+//  3. Push near-white to pure white and darken the text, keeping smooth edges.
+async function blackAndWhite(jpeg) {
+  const { cv } = await loadCv();
+  const bmp = await createImageBitmap(jpeg);
+  const w = bmp.width;
+  const h = bmp.height;
+  const canvas = new OffscreenCanvas(w, h);
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(bmp, 0, 0);
+  bmp.close();
+
+  const src = cv.matFromImageData(ctx.getImageData(0, 0, w, h));
+  const gray = new cv.Mat();
+  cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
+  src.delete();
+
+  // 1. Paper brightness: shrink, thicken the light areas over the text, smooth.
+  const small = new cv.Mat();
+  cv.resize(gray, small, new cv.Size(Math.round(w / 4), Math.round(h / 4)), 0, 0, cv.INTER_AREA);
+  const k = Math.max(7, Math.round(small.cols / 40)) | 1;
+  const kernel = cv.getStructuringElement(cv.MORPH_RECT, new cv.Size(k, k));
+  cv.dilate(small, small, kernel);
+  kernel.delete();
+  cv.medianBlur(small, small, 21);
+  const paper = new cv.Mat();
+  cv.resize(small, paper, new cv.Size(w, h), 0, 0, cv.INTER_LINEAR);
+  small.delete();
+
+  // 2. Divide out the paper brightness.
+  const flat = new cv.Mat();
+  cv.divide(gray, paper, flat, 255);
+  gray.delete();
+  paper.delete();
+
+  // 3. Levels: at or below BW_BLACK becomes black, at or above BW_WHITE white.
+  const out = ctx.createImageData(w, h);
+  const d = flat.data;
+  const o = out.data;
+  const range = BW_WHITE - BW_BLACK;
+  for (let i = 0, j = 0; i < d.length; i++, j += 4) {
+    let v = ((d[i] - BW_BLACK) / range) * 255;
+    v = v < 0 ? 0 : v > 255 ? 255 : v;
+    o[j] = o[j + 1] = o[j + 2] = v;
+    o[j + 3] = 255;
+  }
+  flat.delete();
+  ctx.putImageData(out, 0, 0);
+
+  const result = await canvas.convertToBlob({ type: 'image/jpeg', quality: JPEG_QUALITY });
+  return { jpeg: result, width: w, height: h };
 }
 
 // Returns the page's four corners (top-left, top-right, bottom-right,

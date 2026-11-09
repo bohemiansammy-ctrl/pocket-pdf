@@ -54,16 +54,24 @@
     </div>
   </main>
 
-  <main id="result" class="screen" hidden>
-    <p id="result-note" class="message" role="status" hidden></p>
+  <main id="pages" class="screen" hidden>
+    <p id="pages-note" class="message" role="status" hidden></p>
+    <div id="thumbs" class="thumbs" role="list" aria-label="Pages"></div>
     <div class="preview-box">
-      <img id="preview" class="preview" alt="Your straightened page">
+      <img id="preview" class="preview" alt="The selected page">
+      <p id="preview-busy" class="preview-busy" hidden>Making black and white…</p>
     </div>
-    <button id="share-btn" class="btn-primary" type="button">Share PDF</button>
+    <div class="mode-switch" role="radiogroup" aria-label="Colour or black and white">
+      <button id="mode-colour" type="button" role="radio" aria-checked="true">Colour</button>
+      <button id="mode-bw" type="button" role="radio" aria-checked="false">Black and white</button>
+    </div>
     <div class="button-row compact">
       <button id="edit-btn" class="btn-secondary" type="button">Edit</button>
-      <button id="rescan-btn" class="btn-secondary" type="button">Rescan</button>
+      <button id="retake-page-btn" class="btn-secondary" type="button">Retake</button>
+      <button id="delete-btn" class="btn-delete" type="button">Delete</button>
     </div>
+    <button id="add-btn" class="btn-secondary" type="button">Add another page</button>
+    <button id="share-btn" class="btn-primary" type="button">Share PDF</button>
   </main>
 
   <div id="update-banner" class="banner" role="alert" hidden>

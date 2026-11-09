@@ -20,6 +20,7 @@ const APP_FILES = [
   'js/pdf/build.js',
   'js/share/share.js',
   'js/screens/adjust.js',
+  'js/screens/pages.js',
   'icons/icon-192.png',
   'icons/icon-512.png',
   'icons/icon-maskable-512.png',

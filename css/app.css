@@ -341,3 +341,130 @@ html, body {
   min-height: 60px;
   font-size: 22px;
 }
+
+/* ---- Pages screen ---- */
+
+/* The selected page fills whatever space is left (at least 150 px). */
+#pages .preview-box {
+  position: relative;
+  flex: 1 1 0;
+  min-height: 150px;
+}
+#pages .preview {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  max-width: 100%;
+  max-height: 100%;
+}
+.preview-busy {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  margin: 0;
+  padding: 12px 18px;
+  border-radius: 16px;
+  background: var(--text);
+  color: var(--white);
+  font-size: 20px;
+  white-space: nowrap;
+}
+.preview-busy[hidden] { display: none; }
+
+/* Row of page thumbnails; scrolls sideways when there are many. */
+.thumbs {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 4px 2px 6px;
+  flex-shrink: 0;
+  scrollbar-width: none;
+}
+.thumb {
+  position: relative;
+  flex: 0 0 auto;
+  width: 72px;
+  height: 100px;
+  padding: 0;
+  border: 3px solid transparent;
+  border-radius: 10px;
+  background: var(--white);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+}
+.thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 7px;
+}
+.thumb[aria-current="true"] {
+  border-color: var(--teal);
+  box-shadow: 0 0 0 2px var(--brand-pale);
+}
+.thumb-number {
+  position: absolute;
+  left: -6px;
+  bottom: -6px;
+  min-width: 30px;
+  height: 30px;
+  padding: 0 6px;
+  border-radius: 15px;
+  background: var(--teal);
+  color: var(--white);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 30px;
+  text-align: center;
+}
+
+/* Colour / Black and white switch. */
+.mode-switch {
+  display: flex;
+  padding: 4px;
+  border: 3px solid var(--teal);
+  border-radius: 18px;
+  background: var(--white);
+  flex-shrink: 0;
+}
+.mode-switch button {
+  flex: 1;
+  min-height: 52px;
+  border: 0;
+  border-radius: 13px;
+  background: transparent;
+  color: var(--teal);
+  font-size: 20px;
+  font-weight: 700;
+  padding: 0 4px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.mode-switch button[aria-checked="true"] {
+  background: var(--teal);
+  color: var(--white);
+}
+.mode-switch button:disabled { opacity: 0.6; }
+
+/* Delete: white with a deep red outline; solid red when asking to confirm. */
+.btn-delete {
+  min-height: 56px;
+  padding: 8px 12px;
+  border: 3px solid var(--red);
+  border-radius: 16px;
+  background: var(--white);
+  color: var(--red);
+  font-size: 20px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.btn-delete.confirming {
+  background: var(--red);
+  color: var(--white);
+}
+
+#pages > .btn-secondary,
+#pages > .btn-primary { flex-shrink: 0; }
+#pages .button-row { flex-shrink: 0; }

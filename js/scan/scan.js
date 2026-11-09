@@ -1,22 +1,34 @@
-// Talks to the background worker that finds and straightens the page.
+// Talks to the background worker that finds, straightens and cleans up pages.
 
 let worker = null;
+let nextId = 1;
+const waiting = new Map(); // request id -> { resolve, reject }
 
 function getWorker() {
-  if (!worker) worker = new Worker('js/scan/worker.js');
+  if (!worker) {
+    worker = new Worker('js/scan/worker.js');
+    worker.onmessage = (e) => {
+      const job = waiting.get(e.data.id);
+      if (!job) return;
+      waiting.delete(e.data.id);
+      if (e.data.ok) job.resolve(e.data);
+      else job.reject(new Error(e.data.error));
+    };
+    worker.onerror = (e) => {
+      // A crashed worker (often out of memory) can't be reused.
+      worker = null;
+      for (const job of waiting.values()) job.reject(new Error(e.message || 'worker failed'));
+      waiting.clear();
+    };
+  }
   return worker;
 }
 
 function ask(message) {
   return new Promise((resolve, reject) => {
-    const w = getWorker();
-    w.onmessage = (e) => (e.data.ok ? resolve(e.data) : reject(new Error(e.data.error)));
-    w.onerror = (e) => {
-      // A crashed worker (often out of memory) can't be reused.
-      worker = null;
-      reject(new Error(e.message || 'worker failed'));
-    };
-    w.postMessage(message);
+    const id = nextId++;
+    waiting.set(id, { resolve, reject });
+    getWorker().postMessage({ id, ...message });
   });
 }
 
@@ -35,6 +47,12 @@ export function findPage(file) {
 // (top-left, top-right, bottom-right, bottom-left). Resolves to { jpeg, width, height }.
 export function straighten(corners) {
   return ask({ type: 'straighten', corners });
+}
+
+// Makes the black-and-white (photocopy) version of a straightened page.
+// Resolves to { jpeg, width, height }.
+export function blackAndWhite(jpeg) {
+  return ask({ type: 'bw', jpeg });
 }
 
 // Forgets the current photo (e.g. after Retake).
