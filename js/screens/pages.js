@@ -1,5 +1,5 @@
 // Pages screen: the pages in order as thumbnails, a big view of the selected
-// page, and its controls (Colour / Black and white, Delete).
+// page, and its controls (the Colour toggle, Delete).
 //
 // Each page: {
 //   source,   the original photo (kept so Edit can re-crop it)
@@ -16,8 +16,7 @@ const thumbs = $('thumbs');
 const preview = $('preview');
 const busy = $('preview-busy');
 const note = $('pages-note');
-const colourBtn = $('mode-colour');
-const bwBtn = $('mode-bw');
+const modeToggle = $('mode-toggle'); // on = colour, off = black and white
 const deleteBtn = $('delete-btn');
 
 export const pages = [];
@@ -104,8 +103,13 @@ function setMode(mode) {
   hooks.changed();
 }
 
-colourBtn.addEventListener('click', () => setMode('colour'));
-bwBtn.addEventListener('click', () => setMode('bw'));
+function toggleMode() {
+  const page = pages[selected];
+  if (page && !page.making) setMode(page.mode === 'colour' ? 'bw' : 'colour');
+}
+
+modeToggle.addEventListener('click', toggleMode);
+$('mode-label').addEventListener('click', toggleMode); // tapping the word works too
 
 // ---- Delete (tap twice, so one stray tap can't lose a page) ----
 
@@ -169,7 +173,6 @@ export function render() {
   preview.src = imageFor(page).url;
   preview.alt = `Page ${selected + 1}`;
   busy.hidden = !page.making;
-  colourBtn.setAttribute('aria-checked', String(page.mode === 'colour'));
-  bwBtn.setAttribute('aria-checked', String(page.mode === 'bw'));
-  colourBtn.disabled = bwBtn.disabled = !!page.making;
+  modeToggle.setAttribute('aria-checked', String(page.mode === 'colour'));
+  modeToggle.disabled = !!page.making;
 }

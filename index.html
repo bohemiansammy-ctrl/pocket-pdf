@@ -18,6 +18,7 @@
     </header>
     <button id="scan-btn" class="scan-btn" type="button">Scan</button>
     <p id="message" class="message" role="status" hidden></p>
+    <p class="credit">@Sammy's Apps</p>
     <p class="version">Version <span id="version"></span></p>
     <input id="camera" type="file" accept="image/*" capture="environment" hidden>
   </main>
@@ -61,16 +62,17 @@
       <img id="preview" class="preview" alt="The selected page">
       <p id="preview-busy" class="preview-busy" hidden>Making black and white…</p>
     </div>
-    <div class="mode-switch" role="radiogroup" aria-label="Colour or black and white">
-      <button id="mode-colour" type="button" role="radio" aria-checked="true">Colour</button>
-      <button id="mode-bw" type="button" role="radio" aria-checked="false">Black and white</button>
+    <div class="mode-toggle">
+      <span id="mode-label" class="toggle-label">Colour</span>
+      <button id="mode-toggle" class="switch" type="button" role="switch" aria-checked="true"
+        aria-labelledby="mode-label"><span class="switch-knob"></span></button>
     </div>
-    <div class="button-row compact">
+    <div class="button-grid">
       <button id="edit-btn" class="btn-secondary" type="button">Edit</button>
       <button id="retake-page-btn" class="btn-secondary" type="button">Retake</button>
+      <button id="add-btn" class="btn-secondary" type="button">Add Page</button>
       <button id="delete-btn" class="btn-delete" type="button">Delete</button>
     </div>
-    <button id="add-btn" class="btn-secondary" type="button">Add another page</button>
     <button id="share-btn" class="btn-primary" type="button">Share PDF</button>
   </main>
 
