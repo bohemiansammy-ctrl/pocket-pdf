@@ -1,6 +1,7 @@
-// Adjust screen: the photo with a teal outline and four draggable corner dots.
-// Corners are fractions (0 to 1) of the photo's width and height, so they map
-// exactly onto the full-size photo whatever size it is shown at here.
+// Adjust screen: the photo with a teal outline, four draggable corner dots and
+// four mid-edge handles. Corners are fractions (0 to 1) of the photo's width
+// and height, so they map exactly onto the full-size photo whatever size it
+// is shown at here.
 
 const DOT_ROOM = 28; // px kept around the photo so edge dots stay easy to grab
 const LOUPE = 128;   // magnifier size in px (matches the CSS)
@@ -13,10 +14,13 @@ const wrap = $('adjust-wrap');
 const photo = $('adjust-photo');
 const outline = $('adjust-outline');
 const dots = [...wrap.querySelectorAll('.corner')]; // top-left, top-right, bottom-right, bottom-left
+const edges = [...wrap.querySelectorAll('.edge')]; // top, right, bottom, left
+const EDGE_ENDS = [[0, 1], [1, 2], [2, 3], [3, 0]]; // the two corners each edge joins
 const loupe = $('loupe');
 const loupeCanvas = loupe.querySelector('canvas');
 
 let corners = [];
+let loupePoint = null; // returns the point the magnifier is centred on
 
 // Shows the photo with the given corners. Resolves once it is laid out.
 export function openAdjust(previewUrl, startCorners) {
@@ -57,7 +61,20 @@ function draw() {
     dot.style.left = corners[i].x * 100 + '%';
     dot.style.top = corners[i].y * 100 + '%';
   });
+  const r = wrap.getBoundingClientRect();
+  edges.forEach((handle, k) => {
+    const [a, b] = EDGE_ENDS[k].map((i) => corners[i]);
+    handle.style.left = ((a.x + b.x) / 2) * 100 + '%';
+    handle.style.top = ((a.y + b.y) / 2) * 100 + '%';
+    const angle = Math.atan2((b.y - a.y) * r.height, (b.x - a.x) * r.width);
+    handle.style.transform = `rotate(${angle}rad)`;
+  });
 }
+
+const midpoint = (k) => {
+  const [a, b] = EDGE_ENDS[k].map((i) => corners[i]);
+  return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+};
 
 // ---- Dragging ----
 // The dot keeps the same offset from your finger as when you first touched
@@ -75,7 +92,7 @@ dots.forEach((dot, i) => {
       dy: e.clientY - (r.top + corners[i].y * r.height),
     };
     dot.classList.add('dragging');
-    showLoupe(i);
+    showLoupe(() => corners[i]);
   });
 
   dot.addEventListener('pointermove', (e) => {
@@ -86,7 +103,7 @@ dots.forEach((dot, i) => {
       y: clamp((e.clientY - grab.dy - r.top) / r.height),
     };
     draw();
-    drawLoupe(i);
+    drawLoupe();
   });
 
   const stop = () => {
@@ -98,20 +115,85 @@ dots.forEach((dot, i) => {
   dot.addEventListener('pointercancel', stop);
 });
 
+// An edge handle moves its whole edge straight in or out (at right angles to
+// the edge), so both corners move together and the edge keeps its angle.
+// Sliding along the edge does nothing. The edge stops at the photo's border.
+
+edges.forEach((handle, k) => {
+  const [ia, ib] = EDGE_ENDS[k];
+  let grab = null;
+
+  handle.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    handle.setPointerCapture(e.pointerId);
+    const r = wrap.getBoundingClientRect();
+    // Work in screen pixels so "at right angles" looks right on screen.
+    const a = { x: corners[ia].x * r.width, y: corners[ia].y * r.height };
+    const b = { x: corners[ib].x * r.width, y: corners[ib].y * r.height };
+    const len = Math.hypot(b.x - a.x, b.y - a.y) || 1;
+    grab = {
+      x: e.clientX,
+      y: e.clientY,
+      a,
+      b,
+      n: { x: -(b.y - a.y) / len, y: (b.x - a.x) / len }, // unit vector across the edge
+    };
+    handle.classList.add('dragging');
+    showLoupe(() => midpoint(k));
+  });
+
+  handle.addEventListener('pointermove', (e) => {
+    if (!grab) return;
+    const r = wrap.getBoundingClientRect();
+    const { a, b, n } = grab;
+
+    // How far the finger has moved across the edge, limited so neither
+    // corner leaves the photo.
+    let d = (e.clientX - grab.x) * n.x + (e.clientY - grab.y) * n.y;
+    let lo = -Infinity;
+    let hi = Infinity;
+    for (const p of [a, b]) {
+      for (const [pos, dir, max] of [[p.x, n.x, r.width], [p.y, n.y, r.height]]) {
+        if (Math.abs(dir) < 1e-9) continue;
+        const t1 = -pos / dir;
+        const t2 = (max - pos) / dir;
+        lo = Math.max(lo, Math.min(t1, t2));
+        hi = Math.min(hi, Math.max(t1, t2));
+      }
+    }
+    d = Math.min(hi, Math.max(lo, d));
+
+    corners[ia] = { x: (a.x + n.x * d) / r.width, y: (a.y + n.y * d) / r.height };
+    corners[ib] = { x: (b.x + n.x * d) / r.width, y: (b.y + n.y * d) / r.height };
+    draw();
+    drawLoupe();
+  });
+
+  const stop = () => {
+    grab = null;
+    handle.classList.remove('dragging');
+    loupe.hidden = true;
+  };
+  handle.addEventListener('pointerup', stop);
+  handle.addEventListener('pointercancel', stop);
+});
+
 const clamp = (v) => Math.min(1, Math.max(0, v));
 
 // ---- Magnifier ----
 // While you drag, a bubble shows the area under your finger, zoomed in, with
-// a crosshair on the exact spot the dot will land.
+// a crosshair on the exact spot: the corner, or the middle of the edge.
 
-function showLoupe(i) {
+function showLoupe(getPoint) {
+  loupePoint = getPoint;
   const dpr = window.devicePixelRatio || 1;
   loupeCanvas.width = loupeCanvas.height = Math.round(LOUPE * dpr);
   loupe.hidden = false;
-  drawLoupe(i);
+  drawLoupe();
 }
 
-function drawLoupe(i) {
+function drawLoupe() {
+  const at = loupePoint();
   const ctx = loupeCanvas.getContext('2d');
   const size = loupeCanvas.width;
   const dpr = size / LOUPE;
@@ -121,8 +203,8 @@ function drawLoupe(i) {
 
   // The patch of photo to show, centred on the dot, in photo pixels.
   const span = LOUPE / (ZOOM * (r.width / nw));
-  const sx = corners[i].x * nw - span / 2;
-  const sy = corners[i].y * nh - span / 2;
+  const sx = at.x * nw - span / 2;
+  const sy = at.y * nh - span / 2;
   const k = size / span;
 
   ctx.fillStyle = getComputedStyle(loupe).backgroundColor;
@@ -160,7 +242,7 @@ function drawLoupe(i) {
     ctx.stroke();
   }
 
-  placeLoupe(r.left + corners[i].x * r.width, r.top + corners[i].y * r.height);
+  placeLoupe(r.left + at.x * r.width, r.top + at.y * r.height);
 }
 
 // Puts the magnifier above the dot, or beside it if there's no room above,

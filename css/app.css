@@ -307,3 +307,31 @@ html, body {
   width: 100%;
   height: 100%;
 }
+
+/* Mid-edge handles: a short white bar along the edge, in a 56 px touch area.
+   The bar is turned to match the edge's angle by the script. */
+.edge {
+  position: absolute;
+  width: 56px;
+  height: 56px;
+  margin: -28px 0 0 -28px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  touch-action: none;
+  cursor: grab;
+}
+.edge::after {
+  content: "";
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  top: 21px;
+  height: 14px;
+  border-radius: 7px;
+  background: var(--white);
+  border: 4px solid var(--teal);
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.45);
+  transition: transform 0.1s;
+}
+.edge.dragging::after { transform: scale(1.25); }
