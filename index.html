@@ -24,8 +24,29 @@
 
   <main id="working" class="screen screen-centre" hidden>
     <div class="spinner" aria-hidden="true"></div>
-    <p class="working-text">Straightening your page…</p>
-    <p class="working-hint">The first scan takes longer while the app gets ready.</p>
+    <p id="working-text" class="working-text">Finding the page…</p>
+    <p id="working-hint" class="working-hint">The first scan takes longer while the app gets ready.</p>
+  </main>
+
+  <main id="adjust" class="screen" hidden>
+    <p id="adjust-note" class="adjust-note" role="status">Drag the dots to the corners of the page.</p>
+    <div id="adjust-stage" class="adjust-stage">
+      <div id="adjust-wrap" class="adjust-wrap">
+        <img id="adjust-photo" class="adjust-photo" alt="Your photo">
+        <svg class="adjust-lines" viewBox="0 0 1 1" preserveAspectRatio="none" aria-hidden="true">
+          <polygon class="outline-halo"></polygon>
+          <polygon id="adjust-outline" class="outline-line"></polygon>
+        </svg>
+        <button class="corner" type="button" aria-label="Top-left corner"></button>
+        <button class="corner" type="button" aria-label="Top-right corner"></button>
+        <button class="corner" type="button" aria-label="Bottom-right corner"></button>
+        <button class="corner" type="button" aria-label="Bottom-left corner"></button>
+      </div>
+    </div>
+    <div class="button-row">
+      <button id="retake-btn" class="btn-secondary" type="button">Retake</button>
+      <button id="accept-btn" class="btn-primary" type="button">Looks good</button>
+    </div>
   </main>
 
   <main id="result" class="screen" hidden>

@@ -1,11 +1,14 @@
 // Background worker: finds the page in a photo and straightens it.
 // Runs off the main thread so the screen never freezes.
 //
-// In:  { file }  (the photo from the camera)
-// Out: { ok: true, found, jpeg, width, height }  or  { ok: false, error }
+// In:  { type: 'find', file }              Out: { ok, found, corners, preview }
+//      { type: 'straighten', corners }     Out: { ok, jpeg, width, height }
+//      { type: 'discard' }                 (no reply)
+// Errors come back as { ok: false, error }.
 
 const WORK_MAX = 3000;   // longest side of the working copy of the photo
 const DETECT_MAX = 1000; // longest side used for finding the edges
+const PREVIEW_MAX = 1600; // longest side of the photo shown on the Adjust screen
 const OUT_MAX_W = 2000;  // brief: pages about 2,000 px wide at most
 const OUT_MAX_H = 3000;
 const JPEG_QUALITY = 0.8;
@@ -37,21 +40,38 @@ function loadCv() {
   return cvReady;
 }
 
+// The current photo, kept between "find" and "straighten" so it is only
+// decoded once: { src: cv.Mat, w, h }.
+let current = null;
+
 self.onmessage = async (event) => {
-  if (event.data === 'warm-up') {
+  const msg = event.data;
+  if (msg === 'warm-up') {
     loadCv().catch(() => {});
     return;
   }
+  if (msg.type === 'discard') {
+    discard();
+    return;
+  }
   try {
-    const result = await processPhoto(event.data.file);
+    const result = msg.type === 'find' ? await findPage(msg.file) : await straighten(msg.corners);
     self.postMessage({ ok: true, ...result });
   } catch (e) {
     self.postMessage({ ok: false, error: String(e && e.message || e) });
   }
 };
 
-async function processPhoto(file) {
+function discard() {
+  if (current) current.src.delete();
+  current = null;
+}
+
+// Decodes the photo, finds the page and makes a preview for the Adjust screen.
+// Corners are fractions of the photo's width and height (0 to 1), or null.
+async function findPage(file) {
   const { cv } = await loadCv();
+  discard();
 
   // Decode (honouring the phone's rotation tag) and shrink to the working size.
   const bmp = await createImageBitmap(file, { imageOrientation: 'from-image' });
@@ -63,25 +83,38 @@ async function processPhoto(file) {
   ctx.drawImage(bmp, 0, 0, w, h);
   bmp.close();
 
-  const src = cv.matFromImageData(ctx.getImageData(0, 0, w, h));
-  try {
-    const corners = findCorners(cv, src);
-    const found = corners !== null;
-    const quad = corners || [
-      { x: 0, y: 0 }, { x: w - 1, y: 0 }, { x: w - 1, y: h - 1 }, { x: 0, y: h - 1 },
-    ];
-    const out = warp(cv, src, quad);
-    const outCanvas = new OffscreenCanvas(out.cols, out.rows);
-    outCanvas.getContext('2d').putImageData(
-      new ImageData(new Uint8ClampedArray(out.data), out.cols, out.rows), 0, 0
-    );
-    const size = { width: out.cols, height: out.rows };
-    out.delete();
-    const jpeg = await outCanvas.convertToBlob({ type: 'image/jpeg', quality: JPEG_QUALITY });
-    return { found, jpeg, ...size };
-  } finally {
-    src.delete();
-  }
+  current = { src: cv.matFromImageData(ctx.getImageData(0, 0, w, h)), w, h };
+  const corners = findCorners(cv, current.src);
+
+  const ps = Math.min(1, PREVIEW_MAX / Math.max(w, h));
+  const small = new OffscreenCanvas(Math.round(w * ps), Math.round(h * ps));
+  small.getContext('2d').drawImage(canvas, 0, 0, small.width, small.height);
+  const preview = await small.convertToBlob({ type: 'image/jpeg', quality: 0.85 });
+
+  return {
+    found: corners !== null,
+    corners: corners && corners.map((p) => ({ x: p.x / w, y: p.y / h })),
+    preview,
+  };
+}
+
+// Straightens the current photo using exactly the corners given
+// (fractions, in the order top-left, top-right, bottom-right, bottom-left).
+async function straighten(corners) {
+  const { cv } = await loadCv();
+  if (!current) throw new Error('photo no longer available');
+  const { src, w, h } = current;
+
+  const out = warp(cv, src, corners.map((p) => ({ x: p.x * w, y: p.y * h })));
+  const outCanvas = new OffscreenCanvas(out.cols, out.rows);
+  outCanvas.getContext('2d').putImageData(
+    new ImageData(new Uint8ClampedArray(out.data), out.cols, out.rows), 0, 0
+  );
+  const size = { width: out.cols, height: out.rows };
+  out.delete();
+  discard(); // free the memory; the next scan brings a new photo
+  const jpeg = await outCanvas.convertToBlob({ type: 'image/jpeg', quality: JPEG_QUALITY });
+  return { jpeg, ...size };
 }
 
 // Returns the page's four corners (top-left, top-right, bottom-right,

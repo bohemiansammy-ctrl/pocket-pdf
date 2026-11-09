@@ -7,13 +7,7 @@ function getWorker() {
   return worker;
 }
 
-// Start loading the edge-finding library early (e.g. while the camera is open).
-export function warmUp() {
-  getWorker().postMessage('warm-up');
-}
-
-// Resolves to { found, jpeg, width, height }.
-export function straighten(file) {
+function ask(message) {
   return new Promise((resolve, reject) => {
     const w = getWorker();
     w.onmessage = (e) => (e.data.ok ? resolve(e.data) : reject(new Error(e.data.error)));
@@ -22,6 +16,28 @@ export function straighten(file) {
       worker = null;
       reject(new Error(e.message || 'worker failed'));
     };
-    w.postMessage({ file });
+    w.postMessage(message);
   });
+}
+
+// Start loading the edge-finding library early (e.g. while the camera is open).
+export function warmUp() {
+  getWorker().postMessage('warm-up');
+}
+
+// Resolves to { found, corners, preview }. Corners are fractions (0 to 1)
+// of the photo's width and height, or null if no page was found.
+export function findPage(file) {
+  return ask({ type: 'find', file });
+}
+
+// Straightens the photo from the last findPage() using exactly these corners
+// (top-left, top-right, bottom-right, bottom-left). Resolves to { jpeg, width, height }.
+export function straighten(corners) {
+  return ask({ type: 'straighten', corners });
+}
+
+// Forgets the current photo (e.g. after Retake).
+export function discardPhoto() {
+  if (worker) worker.postMessage({ type: 'discard' });
 }
