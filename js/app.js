@@ -151,11 +151,21 @@ let updateTapped = false;
 
 function showUpdateBanner(worker) {
   banner.hidden = false;
+  reserveBannerSpace();
   $('update-btn').onclick = () => {
     updateTapped = true;
     worker.postMessage('SKIP_WAITING');
   };
 }
+
+// Leaves room at the bottom of every screen for the banner, so it never
+// covers the version number or the buttons.
+function reserveBannerSpace() {
+  const space = banner.hidden ? 0 : banner.offsetHeight + 16;
+  document.documentElement.style.setProperty('--banner-space', space + 'px');
+  layoutAdjust();
+}
+window.addEventListener('resize', reserveBannerSpace);
 
 if ('serviceWorker' in navigator) {
   // Reload only when you tapped "Update now". The very first install also

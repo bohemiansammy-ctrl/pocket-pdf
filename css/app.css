@@ -40,7 +40,8 @@ html, body {
   display: flex;
   flex-direction: column;
   min-height: 100dvh;
-  padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
+  padding: max(16px, env(safe-area-inset-top)) 16px
+    calc(max(16px, env(safe-area-inset-bottom)) + var(--banner-space, 0px));
   gap: 16px;
 }
 
@@ -285,4 +286,24 @@ html, body {
   width: auto;
   min-height: 72px;
   font-size: 24px;
+}
+
+/* Magnifier shown while dragging a corner dot. */
+.loupe {
+  position: fixed;
+  z-index: 10;
+  width: 128px;
+  height: 128px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 4px solid var(--teal);
+  background: var(--bg);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+}
+.loupe[hidden] { display: none; }
+.loupe canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
