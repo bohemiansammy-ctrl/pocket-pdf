@@ -38,12 +38,20 @@ html, body {
   display: flex;
   flex-direction: column;
   min-height: 100dvh;
-  padding: 16px 16px max(16px, env(safe-area-inset-bottom));
+  padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
   gap: 16px;
+}
+
+/* Home fits the screen exactly: the Scan button takes whatever space is
+   left after the logo, name and version, so nothing needs scrolling. */
+#home {
+  height: 100dvh;
+  min-height: 0;
 }
 
 .scan-btn {
   flex: 1;
+  min-height: 0;
   width: 100%;
   border: 0;
   border-radius: 28px;
@@ -86,13 +94,15 @@ html, body {
 
 .banner {
   position: fixed;
-  left: 16px;
-  right: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 32px);
+  max-width: 480px;
   bottom: max(16px, env(safe-area-inset-bottom));
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
+  text-align: center;
   gap: 12px;
   padding: 16px;
   border-radius: 20px;
