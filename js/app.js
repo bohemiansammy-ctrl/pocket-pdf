@@ -272,6 +272,28 @@ $('export-back').addEventListener('click', () => {
   show('pages');
 });
 
+// ---- Ready for offline ----
+// Shows on the Home screen once the app and its libraries (about 10 MB) are
+// all saved on the phone, so it works with no signal.
+
+const OFFLINE_FILES = ['index.html', 'vendor/opencv.js', 'vendor/jspdf.umd.min.js'];
+const offlineText = $('offline');
+
+async function checkOffline() {
+  if (!('serviceWorker' in navigator) || !('caches' in window)) return;
+  const ready = !!navigator.serviceWorker.controller &&
+    (await Promise.all(OFFLINE_FILES.map((f) => caches.match(f)))).every(Boolean);
+  offlineText.textContent = ready ? '✓ Ready for offline' : 'Getting ready for offline… (stay online)';
+  offlineText.classList.toggle('ready', ready);
+  offlineText.hidden = false;
+}
+
+if ('serviceWorker' in navigator) {
+  checkOffline();
+  navigator.serviceWorker.ready.then(checkOffline);
+  navigator.serviceWorker.addEventListener('controllerchange', checkOffline);
+}
+
 // ---- Offline support and updates ----
 // A new version downloads quietly in the background. When it is ready, a
 // banner appears; tapping "Update now" switches to it and reloads the page.

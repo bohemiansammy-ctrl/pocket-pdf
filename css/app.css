@@ -756,3 +756,17 @@ html, body {
   margin: 0;
   font-size: 20px;
 }
+
+/* ---- Ready for offline (Home screen) ---- */
+
+.offline {
+  margin: 0 0 -8px;
+  font-size: 20px;
+  text-align: center;
+  color: #6B7280;
+}
+.offline.ready {
+  color: var(--teal);
+  font-weight: 700;
+}
+.offline[hidden] { display: none; }

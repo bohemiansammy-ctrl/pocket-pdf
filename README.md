@@ -25,8 +25,24 @@ Everything runs on the phone. There is no server, no account and no tracking.
 2. Tap the **⋮** menu, then **Add to Home screen** (or **Install app**).
 3. Open Pocket PDF from your home screen from now on.
 
-The first time, the app downloads about 10 MB, so use Wi-Fi. After that it
-works offline, and updates only download the small files that changed.
+The first time, the app downloads about 10 MB, so use Wi-Fi. The home screen
+says **"Getting ready for offline…"** until that's done, then
+**"✓ Ready for offline"**. After that it works with no signal, and updates only
+download the small files that changed.
+
+## Privacy lock
+
+The app is locked so it can only reach its own address (your GitHub Pages
+site, and only to fetch its own files). The phone's browser refuses anything
+else: no outside servers, images, fonts or tracking. This is done in two
+places, and both must stay:
+
+- the `Content-Security-Policy` line near the top of `index.html`,
+- the "Privacy lock" section of `sw.js` (refuses any other address, and puts
+  the same lock on the background worker that finds the page).
+
+If you ever add something that needs the internet, it will be blocked until
+you change both. That's intended.
 
 ## Updating the app
 
