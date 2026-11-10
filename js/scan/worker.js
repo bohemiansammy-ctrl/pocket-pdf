@@ -5,6 +5,7 @@
 //      { id, type: 'straighten', corners } Out: { id, ok, jpeg, width, height }
 //      { id, type: 'bw', jpeg }            Out: { id, ok, jpeg, width, height }
 //      { id, type: 'rotate', jpeg, degrees } Out: { id, ok, jpeg, width, height }
+//      { id, type: 'shrink', jpeg, maxBytes } Out: { id, ok, jpeg, width, height }
 //      { type: 'discard' }                 (no reply)
 // Errors come back as { id, ok: false, error }.
 
@@ -53,6 +54,7 @@ const jobs = {
   straighten: (msg) => straighten(msg.corners),
   bw: (msg) => blackAndWhite(msg.jpeg),
   rotate: (msg) => rotate(msg.jpeg, msg.degrees),
+  shrink: (msg) => shrink(msg.jpeg, msg.maxBytes),
 };
 
 self.onmessage = async (event) => {
@@ -141,6 +143,30 @@ async function rotate(jpeg, degrees) {
   bmp.close();
   const out = await canvas.convertToBlob({ type: 'image/jpeg', quality: JPEG_QUALITY });
   return { jpeg: out, width: w, height: h };
+}
+
+// Makes a page image fit a size budget for the PDF: lower the JPEG quality
+// in small steps, then (only if still too big) make it a little smaller.
+// Returns the first version that fits, or the smallest tried.
+async function shrink(jpeg, maxBytes) {
+  const bmp = await createImageBitmap(jpeg);
+  let best = null;
+  for (const [scale, qualities] of [[1, [0.72, 0.64, 0.56, 0.48]], [0.8, [0.6, 0.5]], [0.65, [0.5]]]) {
+    const w = Math.round(bmp.width * scale);
+    const h = Math.round(bmp.height * scale);
+    const canvas = new OffscreenCanvas(w, h);
+    canvas.getContext('2d').drawImage(bmp, 0, 0, w, h);
+    for (const quality of qualities) {
+      const out = await canvas.convertToBlob({ type: 'image/jpeg', quality });
+      if (!best || out.size < best.jpeg.size) best = { jpeg: out, width: w, height: h };
+      if (out.size <= maxBytes) {
+        bmp.close();
+        return best;
+      }
+    }
+  }
+  bmp.close();
+  return best;
 }
 
 // Makes the photocopy look from a straightened page: white paper, dark text,

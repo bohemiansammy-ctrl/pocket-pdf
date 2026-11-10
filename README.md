@@ -66,8 +66,10 @@ Delete these yourself if you need to:
 | `js/scan/` | Finds the page in the photo and straightens it |
 | `js/screens/adjust.js` | The Adjust screen: the photo with draggable corner dots and edge handles |
 | `js/screens/pages.js` | The Pages screen: thumbnails, Rotate, the Colour toggle, Delete |
-| `js/pdf/build.js` | Makes the PDF |
-| `js/share/share.js` | Opens the Android share menu |
+| `js/screens/export.js` | The Export screen: file name, paper sizes, file size, Save / Share / Print |
+| `js/pdf/build.js` | Makes the PDF (A4 or Fit to paper, per page) |
+| `js/share/share.js` | Saves to Downloads, or opens the Android share menu |
+| `js/share/print.js` | Opens the Android print dialog |
 | `vendor/` | Two libraries, OpenCV.js 4.9.0 (page finding, about 10 MB) and jsPDF 4.2.1 (PDF making), with their licences |
 | `icons/` | The logo and app icons (the only images allowed here) |
 | `fonts/` | The Figtree font and its licence |

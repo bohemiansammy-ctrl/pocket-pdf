@@ -1,13 +1,13 @@
-// Pocket PDF – Step 3: scan pages, adjust their corners, choose colour or
-// black and white for each, and share them as one PDF.
+// Pocket PDF – Step 4: scan pages, adjust their corners, choose colour or
+// black and white and a paper size for each, then save, share or print them
+// as one PDF.
 
 import { warmUp, findPage, straighten, discardPhoto } from './scan/scan.js';
 import { openAdjust, getCorners, layout as layoutAdjust } from './screens/adjust.js';
 import {
-  pages, putPage, selectedIndex, imageFor, allReady, setPageHooks, render as renderPages,
+  pages, putPage, selectedIndex, setPageHooks, render as renderPages,
 } from './screens/pages.js';
-import { buildPdf } from './pdf/build.js';
-import { sharePdf } from './share/share.js';
+import { openExport, resetExport } from './screens/export.js';
 
 const VERSION = self.POCKET_PDF_VERSION;
 const $ = (id) => document.getElementById(id);
@@ -16,7 +16,7 @@ $('version').textContent = VERSION;
 
 // ---- Screens ----
 
-const screens = ['home', 'working', 'adjust', 'pages'];
+const screens = ['home', 'working', 'adjust', 'pages', 'export'];
 function show(name) {
   for (const s of screens) $(s).hidden = s !== name;
   window.scrollTo(0, 0);
@@ -162,6 +162,7 @@ $('accept-btn').addEventListener('click', async () => {
       // Edit keeps the page's turn; a retake starts upright.
       rotation: editing && replacing ? replacing.rotation : 0,
       mode: replacing ? replacing.mode : 'colour',
+      paper: replacing ? replacing.paper : 'a4',
     });
     photo = null;
     showPagesNote('');
@@ -171,58 +172,28 @@ $('accept-btn').addEventListener('click', async () => {
   }
 });
 
-// ---- The PDF ----
-// Remade in the background whenever the pages change, so Share is quick.
-
-let pdfVersion = 0;
-let pdfMade = { version: -1, blob: null };
-
-async function makePdf() {
-  const version = pdfVersion;
-  await allReady();
-  const blob = await buildPdf(pages.map(imageFor));
-  if (version === pdfVersion) pdfMade = { version, blob };
-  return version === pdfVersion;
-}
-
-async function latestPdf() {
-  while (pdfMade.version !== pdfVersion) await makePdf();
-  return pdfMade.blob;
-}
+// ---- Export ----
 
 setPageHooks({
-  changed() {
-    pdfVersion++;
-    makePdf().catch((err) => console.error(err));
-  },
+  changed() {},
   emptied() {
-    pdfVersion++;
-    pdfMade = { version: -1, blob: null };
+    resetExport();
     show('home');
   },
 });
 
-$('share-btn').addEventListener('click', async () => {
+// The Share button on the Pages screen opens the Export screen.
+$('share-btn').addEventListener('click', () => {
   if (!pages.length) return;
   showPagesNote('');
-  try {
-    const outcome = await sharePdf(await latestPdf(), fileName());
-    if (outcome === 'downloaded') {
-      showPagesNote("Sharing isn't available here, so the PDF was saved to Downloads.");
-    }
-  } catch (err) {
-    console.error(err);
-    showPagesNote("Couldn't open the share menu. Please try again.");
-  }
+  show('export');
+  openExport();
 });
 
-// Temporary name until Step 4 adds the file name box.
-function fileName() {
-  const d = new Date();
-  const p = (n) => String(n).padStart(2, '0');
-  return `Pocket PDF ${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}${p(d.getMinutes())}.pdf`;
-}
-
+$('export-back').addEventListener('click', () => {
+  renderPages();
+  show('pages');
+});
 
 // ---- Offline support and updates ----
 // A new version downloads quietly in the background. When it is ready, a

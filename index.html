@@ -76,7 +76,7 @@
           aria-labelledby="mode-label"><span class="switch-knob"></span></button>
       </div>
       <!-- Share: the standard three-connected-dots symbol. -->
-      <button id="share-btn" class="icon-btn share-btn" type="button" aria-label="Share PDF">
+      <button id="share-btn" class="icon-btn share-btn" type="button" aria-label="Save, share or print the PDF">
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path d="M8.6 10.7 L15.4 6.8 M8.6 13.3 L15.4 17.2" />
           <circle cx="18" cy="5.5" r="2.8" />
@@ -92,6 +92,35 @@
       <button id="delete-btn" class="btn-delete" type="button">Delete</button>
     </div>
   </main>
+
+  <main id="export" class="screen" hidden>
+    <div class="export-top">
+      <button id="export-back" class="back-btn" type="button">‹ Pages</button>
+      <h2 class="export-title">Export</h2>
+    </div>
+    <div class="field">
+      <label class="field-label" for="file-name">File name</label>
+      <div class="name-field">
+        <input id="file-name" type="text" autocomplete="off" autocapitalize="sentences"
+          enterkeyhint="done" placeholder="Type a name">
+        <span class="name-suffix" aria-hidden="true">.pdf</span>
+      </div>
+      <p id="name-error" class="field-error" role="alert" hidden>Please type a file name.</p>
+    </div>
+    <p class="field-label">Paper size</p>
+    <div id="paper-list" class="paper-list"></div>
+    <p id="file-size" class="file-size" role="status"></p>
+    <p id="export-note" class="message" role="status" hidden></p>
+    <button id="save-btn" class="btn-primary" type="button">Save PDF</button>
+    <div class="button-row">
+      <button id="export-share-btn" class="btn-secondary" type="button">Share</button>
+      <button id="print-btn" class="btn-secondary" type="button">Print</button>
+    </div>
+  </main>
+
+  <!-- Filled in only while printing (see js/share/print.js). -->
+  <div id="print-area" aria-hidden="true"></div>
+  <style id="print-style"></style>
 
   <div id="update-banner" class="banner" role="alert" hidden>
     <span>A new version is ready.</span>

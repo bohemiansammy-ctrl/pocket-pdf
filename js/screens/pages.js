@@ -10,6 +10,7 @@
 //   colour, bw,  the versions shown and used in the PDF, turned by `rotation`
 //                { jpeg, width, height, url }
 //   mode,        'colour' or 'bw'
+//   paper,       'a4' or 'fit' (Fit to paper), chosen on the Export screen
 // }
 // Turned versions are always made from the bases, so rotating many times
 // never blurs the page.
@@ -51,9 +52,9 @@ export function allReady() {
 export const withUrl = (img) => ({ ...img, url: URL.createObjectURL(img.jpeg) });
 
 // Adds a page at the end (index = number of pages) or replaces one in place.
-// `straight` is the newly straightened image; `rotation` and `mode` carry
-// over when a page is edited.
-export function putPage(index, { source, corners, straight, rotation = 0, mode = 'colour' }) {
+// `straight` is the newly straightened image; `mode` and `paper` carry over
+// when a page is edited or retaken, and `rotation` when it is edited.
+export function putPage(index, { source, corners, straight, rotation = 0, mode = 'colour', paper = 'a4' }) {
   const page = {
     source,
     corners,
@@ -65,6 +66,7 @@ export function putPage(index, { source, corners, straight, rotation = 0, mode =
     bw: null,
     bwTurn: null,
     mode,
+    paper,
   };
   if (index < pages.length) {
     release(pages[index]);

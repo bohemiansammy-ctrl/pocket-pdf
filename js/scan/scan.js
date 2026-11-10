@@ -60,6 +60,12 @@ export function rotateImage(jpeg, degrees) {
   return ask({ type: 'rotate', jpeg, degrees });
 }
 
+// Makes a page image fit within maxBytes (quality first, then size).
+// Resolves to { jpeg, width, height }.
+export function shrinkImage(jpeg, maxBytes) {
+  return ask({ type: 'shrink', jpeg, maxBytes });
+}
+
 // Forgets the current photo (e.g. after Retake).
 export function discardPhoto() {
   if (worker) worker.postMessage({ type: 'discard' });
