@@ -2,6 +2,7 @@
 // page, and its controls (Rotate, the Colour toggle, Delete).
 //
 // Each page: {
+//   id,          a random name for it in the phone's storage
 //   source,      the original photo (kept so Edit can re-crop it)
 //   corners,     where its corners were placed on that photo
 //   colourBase,  the straightened page, upright as photographed { jpeg, width, height }
@@ -56,6 +57,7 @@ export const withUrl = (img) => ({ ...img, url: URL.createObjectURL(img.jpeg) })
 // when a page is edited or retaken, and `rotation` when it is edited.
 export function putPage(index, { source, corners, straight, rotation = 0, mode = 'colour', paper = 'a4' }) {
   const page = {
+    id: crypto.randomUUID(),
     source,
     corners,
     colourBase: straight,
@@ -77,6 +79,38 @@ export function putPage(index, { source, corners, straight, rotation = 0, mode =
   selected = Math.min(index, pages.length - 1);
   if (page.rotation || page.mode === 'bw') updateLooks(page, page.rotation ? 'Turning the page…' : 'Making black and white…');
   render();
+  hooks.changed();
+}
+
+// Brings back pages kept in the phone's storage (see js/store/store.js).
+export function restorePages(list) {
+  for (const r of list) {
+    const page = {
+      ...r,
+      colour: withUrl(r.colour || r.colourBase),
+      bw: r.bwBase && r.bwTurn !== null ? withUrl(r.bw || r.bwBase) : null,
+      making: null,
+    };
+    if (!page.bw) page.bwTurn = null;
+    pages.push(page);
+    // Anything not finished when it was kept is done again now.
+    if (page.colourTurn !== page.rotation || (page.mode === 'bw' && page.bwTurn !== page.rotation)) {
+      updateLooks(page, page.mode === 'bw' && !page.bwBase ? 'Making black and white…' : 'Turning the page…');
+    }
+  }
+  selected = 0;
+  render();
+}
+
+// Clear all: forget every page.
+export function clearPages() {
+  pages.forEach(release);
+  pages.length = 0;
+  selected = 0;
+}
+
+// For changes made on other screens (the paper size on Export).
+export function notifyChanged() {
   hooks.changed();
 }
 

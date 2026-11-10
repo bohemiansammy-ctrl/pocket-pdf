@@ -23,6 +23,7 @@ const APP_FILES = [
   'js/screens/pages.js',
   'js/screens/export.js',
   'js/share/print.js',
+  'js/store/store.js',
   'icons/icon-192.png',
   'icons/icon-512.png',
   'icons/icon-maskable-512.png',

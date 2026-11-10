@@ -42,11 +42,20 @@ works offline, and updates only download the small files that changed.
 If the banner doesn't appear, close the app fully (swipe it away from
 recent apps), wait a minute, and open it again.
 
+## Unfinished pages
+
+Pages you haven't saved yet are kept on the phone (in the app's own storage),
+so closing the app doesn't lose them. They are deleted:
+
+- **24 hours** after they were last changed (checked when the app opens),
+- straight away with **Clear all** on the Pages screen,
+- once you **Save PDF** or **Share** (the pages stay on screen until you leave
+  the app; any change keeps them again).
+
 ## What isn't cleaned up
 
-Pocket PDF deletes its own unfinished work 24 hours after it was last changed,
-or straight away with **Clear all**. It cannot reach copies outside the app.
-Delete these yourself if you need to:
+Pocket PDF cannot reach copies outside the app. Delete these yourself if you
+need to:
 
 - PDFs saved to **Downloads**.
 - Files you've **shared** (email, Google Drive, WhatsApp and so on).
@@ -70,6 +79,7 @@ Delete these yourself if you need to:
 | `js/pdf/build.js` | Makes the PDF (A4 or Fit to paper, per page) |
 | `js/share/share.js` | Saves to Downloads, or opens the Android share menu |
 | `js/share/print.js` | Opens the Android print dialog |
+| `js/store/store.js` | Keeps unfinished pages on the phone, and deletes them after 24 hours |
 | `vendor/` | Two libraries, OpenCV.js 4.9.0 (page finding, about 10 MB) and jsPDF 4.2.1 (PDF making), with their licences |
 | `icons/` | The logo and app icons (the only images allowed here) |
 | `fonts/` | The Figtree font and its licence |

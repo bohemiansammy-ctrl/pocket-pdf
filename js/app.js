@@ -1,13 +1,17 @@
-// Pocket PDF – Step 4: scan pages, adjust their corners, choose colour or
-// black and white and a paper size for each, then save, share or print them
-// as one PDF.
+// Pocket PDF: scan pages, adjust their corners, choose colour or black and
+// white and a paper size for each, then save, share or print them as one PDF.
+// Unfinished pages are kept on the phone for 24 hours after the last change.
 
 import { warmUp, findPage, straighten, discardPhoto } from './scan/scan.js';
 import { openAdjust, getCorners, layout as layoutAdjust } from './screens/adjust.js';
 import {
   pages, putPage, selectedIndex, setPageHooks, render as renderPages,
+  restorePages, clearPages,
 } from './screens/pages.js';
-import { openExport, resetExport } from './screens/export.js';
+import { openExport, resetExport, typedName, setTypedName } from './screens/export.js';
+import {
+  loadWork, saveSoon, touch, clearWork, isExpired, setStoreProblem,
+} from './store/store.js';
 
 const VERSION = self.POCKET_PDF_VERSION;
 const $ = (id) => document.getElementById(id);
@@ -77,6 +81,7 @@ let adjustUrl = null;
 function openCamera(index) {
   target = index;
   editing = false;
+  touch(pages, typedName()); // you're still working, so the 24 hours restart
   showMessage('');
   showPagesNote('');
   warmUp(); // load the edge finder while the camera is open
@@ -109,6 +114,7 @@ $('camera').addEventListener('change', async (e) => {
 $('edit-btn').addEventListener('click', async () => {
   target = selectedIndex();
   editing = true;
+  touch(pages, typedName());
   const page = pages[target];
   showWorking('Opening the photo…', false);
   try {
@@ -172,15 +178,86 @@ $('accept-btn').addEventListener('click', async () => {
   }
 });
 
-// ---- Export ----
+// ---- Keeping unfinished pages, Clear all and the 24-hour clean-up ----
 
 setPageHooks({
-  changed() {},
+  // Every change is kept in the phone's storage, and restarts the 24 hours.
+  changed() {
+    saveSoon(pages, typedName());
+  },
   emptied() {
+    clearWork();
     resetExport();
     show('home');
   },
 });
+
+setStoreProblem((text) => showPagesNote(text));
+
+// Wipes all unfinished work, on screen and in storage, and goes Home.
+function wipeAll(homeMessage) {
+  resetClear();
+  clearPages();
+  clearWork();
+  resetExport();
+  discardPhoto();
+  photo = null;
+  show('home');
+  showMessage(homeMessage);
+}
+
+// Clear all: tap twice, so one stray tap can't lose everything.
+const clearBtn = $('clear-btn');
+let clearTimer = null;
+
+function resetClear() {
+  clearTimeout(clearTimer);
+  clearBtn.classList.remove('confirming');
+  clearBtn.textContent = 'Clear all';
+}
+
+clearBtn.addEventListener('click', () => {
+  if (!clearBtn.classList.contains('confirming')) {
+    clearBtn.classList.add('confirming');
+    clearBtn.textContent = 'Tap again to clear all pages';
+    clearTimer = setTimeout(resetClear, 3000);
+    return;
+  }
+  wipeAll('All pages cleared.');
+});
+
+const EXPIRED = 'Your unfinished pages were deleted, as they were left for 24 hours.';
+
+// When the app opens: delete work older than 24 hours, otherwise bring it back.
+async function reopenWork() {
+  try {
+    const work = await loadWork();
+    if (!work) return;
+    if (work.expired) {
+      if (!pages.length) showMessage(EXPIRED);
+      return;
+    }
+    if (pages.length) return; // a new scan was started while this was loading
+    setTypedName(work.name);
+    restorePages(work.pages);
+    show('pages');
+    showPagesNote('Your unfinished pages are back.');
+  } catch (err) {
+    console.error(err); // no storage on this phone: the app still works, it just can't keep pages
+  }
+}
+reopenWork();
+
+// If the app was left open in the background, check again when it comes back
+// (but never in the middle of taking or adjusting a photo).
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState !== 'visible' || !pages.length || !isExpired()) return;
+  if (!$('adjust').hidden || !$('working').hidden) return;
+  wipeAll(EXPIRED);
+});
+
+// ---- Export ----
+
 
 // The Share button on the Pages screen opens the Export screen.
 $('share-btn').addEventListener('click', () => {

@@ -91,6 +91,7 @@
       <button id="add-btn" class="btn-secondary" type="button">Add Page</button>
       <button id="delete-btn" class="btn-delete" type="button">Delete</button>
     </div>
+    <button id="clear-btn" class="btn-delete clear-btn" type="button">Clear all</button>
   </main>
 
   <main id="export" class="screen" hidden>
@@ -117,6 +118,20 @@
       <button id="print-btn" class="btn-secondary" type="button">Print</button>
     </div>
   </main>
+
+  <!-- Save to Photos: asked after each Save PDF or Share. -->
+  <div id="photos-ask" class="sheet-backdrop" hidden>
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="photos-title">
+      <p id="photos-done" class="sheet-done"></p>
+      <h2 id="photos-title" class="sheet-title">Save the pages to Photos too?</h2>
+      <p class="sheet-text">Each page is saved as a picture. Choose Photos in the menu that opens.</p>
+      <p id="photos-note" class="field-error" role="alert" hidden></p>
+      <div class="button-row">
+        <button id="photos-no" class="btn-primary" type="button">No</button>
+        <button id="photos-yes" class="btn-secondary" type="button">Yes</button>
+      </div>
+    </div>
+  </div>
 
   <!-- Filled in only while printing (see js/share/print.js). -->
   <div id="print-area" aria-hidden="true"></div>

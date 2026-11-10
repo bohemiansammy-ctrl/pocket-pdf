@@ -1,11 +1,13 @@
 // Export screen: file name, paper size per page, file size, and the three
-// ways out (Save PDF, Share, Print).
+// ways out (Save PDF, Share, Print). After saving or sharing it asks whether
+// to save the pages to Photos as well (No unless you tap Yes).
 
-import { pages, imageFor, allReady } from './pages.js';
+import { pages, imageFor, allReady, notifyChanged } from './pages.js';
 import { shrinkImage } from '../scan/scan.js';
 import { buildPdf } from '../pdf/build.js';
-import { savePdf, sharePdf } from '../share/share.js';
+import { savePdf, sharePdf, sharePictures } from '../share/share.js';
 import { printPages } from '../share/print.js';
+import { finished } from '../store/store.js';
 
 // Each page image is kept under this, so a typical three-page letter comes
 // to about 2 MB. Pages already under it are left exactly as they are.
@@ -32,6 +34,15 @@ export function openExport() {
 // Forget the typed name (when the pages are cleared for a new document).
 export function resetExport() {
   nameInput.value = '';
+  closePhotos();
+}
+
+// The typed name, as typed (kept with the unfinished pages).
+export function typedName() {
+  return nameInput.value;
+}
+export function setTypedName(text) {
+  nameInput.value = text;
 }
 
 function showNote(text) {
@@ -61,7 +72,10 @@ function fileName() {
   return name;
 }
 
-nameInput.addEventListener('input', () => { nameError.hidden = true; });
+nameInput.addEventListener('input', () => {
+  nameError.hidden = true;
+  notifyChanged();
+});
 nameInput.addEventListener('keydown', (e) => {
   if (e.key === 'Enter') nameInput.blur();
 });
@@ -96,6 +110,7 @@ function renderPaperList() {
       b.addEventListener('click', () => {
         if ((page.paper || 'a4') === value) return;
         page.paper = value;
+        notifyChanged();
         renderPaperList();
         remake();
       });
@@ -155,7 +170,7 @@ $('save-btn').addEventListener('click', () => {
   const name = fileName();
   if (!name || !made) return;
   savePdf(made.blob, `${name}.pdf`);
-  showNote(`Saved to Downloads as “${name}.pdf”.`);
+  done(name, `Saved to Downloads as “${name}.pdf”.`);
 });
 
 $('export-share-btn').addEventListener('click', async () => {
@@ -164,8 +179,9 @@ $('export-share-btn').addEventListener('click', async () => {
   showNote('');
   try {
     const outcome = await sharePdf(made.blob, `${name}.pdf`);
+    if (outcome === 'shared') done(name, `Shared “${name}.pdf”.`);
     if (outcome === 'downloaded') {
-      showNote(`Sharing isn't available here, so it was saved to Downloads as “${name}.pdf”.`);
+      done(name, `Sharing isn't available here, so it was saved to Downloads as “${name}.pdf”.`);
     }
   } catch (err) {
     console.error(err);
@@ -182,5 +198,58 @@ $('print-btn').addEventListener('click', async () => {
   } catch (err) {
     console.error(err);
     showNote("Couldn't open printing. Please try again.");
+  }
+});
+
+// The PDF is saved or shared: the work is finished, so it's no longer kept
+// in the phone's storage. Then ask about Photos.
+function done(name, text) {
+  showNote(text);
+  finished();
+  askPhotos(name, text);
+}
+
+// ---- Save to Photos (asked each time; No unless you tap Yes) ----
+
+const photosAsk = $('photos-ask');
+let photosName = '';
+
+function askPhotos(name, text) {
+  photosName = name;
+  $('photos-done').textContent = text;
+  $('photos-note').hidden = true;
+  photosAsk.hidden = false;
+  $('photos-no').focus();
+}
+
+function closePhotos() {
+  photosAsk.hidden = true;
+}
+
+$('photos-no').addEventListener('click', closePhotos);
+// Tapping outside the box counts as No.
+photosAsk.addEventListener('click', (e) => {
+  if (e.target === photosAsk) closePhotos();
+});
+
+// Yes: each page as a JPG (full quality, as seen on the Pages screen) through
+// the Android share menu, where Photos is one of the choices.
+$('photos-yes').addEventListener('click', async () => {
+  const pictures = pages.map((page, i) => ({
+    jpeg: imageFor(page).jpeg,
+    fileName: pages.length > 1 ? `${photosName} - page ${i + 1}.jpg` : `${photosName}.jpg`,
+  }));
+  try {
+    const outcome = await sharePictures(pictures);
+    if (outcome === 'cancelled') return; // the question stays, so you can choose again
+    closePhotos();
+    showNote(outcome === 'shared'
+      ? `${pictures.length > 1 ? `${pictures.length} pictures` : 'The picture'} sent. If you chose Photos, look there.`
+      : "This phone can't send pictures from here, so nothing was saved to Photos.");
+  } catch (err) {
+    console.error(err);
+    const msg = $('photos-note');
+    msg.textContent = "Couldn't open the share menu. Please try again, or tap No.";
+    msg.hidden = false;
   }
 });
