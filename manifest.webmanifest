@@ -1,6 +1,6 @@
 {
   "name": "Pocket PDF Maker",
-  "short_name": "Pocket PDF",
+  "short_name": "PDF Maker",
   "description": "Turn photos of paper into a PDF, on your phone.",
   "start_url": "./",
   "scope": "./",
