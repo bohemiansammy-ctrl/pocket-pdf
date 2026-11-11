@@ -1,4 +1,4 @@
-// Pocket PDF: scan pages, adjust their corners, choose colour or black and
+// Pocket PDF Maker: scan pages, adjust their corners, choose colour or black and
 // white and a paper size for each, then save, share or print them as one PDF.
 // Unfinished pages are kept on the phone for 24 hours after the last change.
 

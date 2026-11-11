@@ -52,15 +52,19 @@ html, body {
   min-height: 0;
 }
 
+/* A fixed, moderate size (not filling the screen), centred in the space
+   between the name and the footer, so everything fits with room to spare,
+   even with the update banner showing. */
 .scan-btn {
-  flex: 1;
-  min-height: 0;
+  flex: 0 0 auto;
+  height: clamp(96px, 20dvh, 180px);
+  margin: auto 0;
   width: 100%;
   border: 0;
   border-radius: 28px;
   background: var(--teal);
   color: var(--white);
-  font-size: 64px;
+  font-size: 52px;
   font-weight: 700;
   letter-spacing: 1px;
   cursor: pointer;
@@ -191,7 +195,17 @@ html, body {
   letter-spacing: -0.5px;
   color: var(--text);
 }
+.wordmark { text-align: center; }
+.wordmark-line { display: block; } /* "Pocket" on one line, the app's name below */
 .wordmark-accent { color: var(--brand-teal); }
+
+/* Short screens: a smaller logo and name, so Home still fits. */
+@media (max-height: 700px) {
+  .brand-logo { width: 64px; height: 64px; }
+  .wordmark { font-size: 34px; }
+  #home { gap: 12px; }
+  .scan-btn { height: clamp(80px, 15dvh, 180px); font-size: 44px; }
+}
 
 /* ---- Adjust screen ---- */
 

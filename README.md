@@ -1,4 +1,4 @@
-# Pocket PDF
+# Pocket PDF Maker
 
 A personal Android web app that turns photos of paper into a scan-style PDF.
 Everything runs on the phone. There is no server, no account and no tracking.
@@ -23,7 +23,7 @@ Everything runs on the phone. There is no server, no account and no tracking.
 
 1. Open the address in **Chrome** on your phone.
 2. Tap the **⋮** menu, then **Add to Home screen** (or **Install app**).
-3. Open Pocket PDF from your home screen from now on.
+3. Open Pocket PDF Maker from your home screen from now on.
 
 The first time, the app downloads about 10 MB, so use Wi-Fi. The home screen
 says **"Getting ready for offline…"** until that's done, then
@@ -70,7 +70,7 @@ so closing the app doesn't lose them. They are deleted:
 
 ## What isn't cleaned up
 
-Pocket PDF cannot reach copies outside the app. Delete these yourself if you
+Pocket PDF Maker cannot reach copies outside the app. Delete these yourself if you
 need to:
 
 - PDFs saved to **Downloads**.
@@ -106,8 +106,8 @@ need to:
 
 - **Logo:** copy `icons/logo.svg`. Keep the tile, and replace only the
   `<g id="symbol">` group with the new app's symbol.
-- **Wordmark:** in `index.html`, change only the word inside
-  `<span class="wordmark-accent">`.
+- **Wordmark:** in `index.html`, change only the words inside
+  the `wordmark-accent` span (the second line).
 - **Colours, font and styles:** copy the `fonts/` folder, the font and
   `--brand-*` lines at the top of `css/app.css`, and the "Pocket family brand"
   block at the end of it. The font is Figtree (20 KB, free to use and share,
