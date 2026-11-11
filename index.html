@@ -19,11 +19,15 @@
       <img class="brand-logo" src="icons/logo.svg" alt="">
       <h1 class="wordmark"><span class="wordmark-line">Pocket</span> <span class="wordmark-line wordmark-accent">PDF Maker</span></h1>
     </header>
-    <button id="scan-btn" class="scan-btn" type="button">Scan</button>
-    <p id="message" class="message" role="status" hidden></p>
-    <p id="offline" class="offline" role="status" hidden></p>
-    <p class="credit">@Sammy's Apps</p>
-    <p class="version">Version <span id="version"></span></p>
+    <div class="home-middle">
+      <button id="scan-btn" class="scan-btn" type="button">Scan</button>
+      <p id="message" class="message" role="status" hidden></p>
+    </div>
+    <footer class="home-foot">
+      <p id="offline" class="offline" role="status" hidden></p>
+      <p class="credit">@Sammy's Apps</p>
+      <p class="version">Version <span id="version"></span></p>
+    </footer>
     <input id="camera" type="file" accept="image/*" capture="environment" hidden>
   </main>
 

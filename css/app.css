@@ -47,18 +47,11 @@ html, body {
 
 /* Home fits the screen exactly: the Scan button takes whatever space is
    left after the logo, name and version, so nothing needs scrolling. */
-#home {
-  height: 100dvh;
-  min-height: 0;
-}
+/* Home screen layout: see "Home screen" near the end of this file. */
 
-/* A fixed, moderate size (not filling the screen), centred in the space
-   between the name and the footer, so everything fits with room to spare,
-   even with the update banner showing. */
 .scan-btn {
   flex: 0 0 auto;
-  height: clamp(96px, 20dvh, 180px);
-  margin: auto 0;
+  height: 120px;
   width: 100%;
   border: 0;
   border-radius: 28px;
@@ -199,13 +192,6 @@ html, body {
 .wordmark-line { display: block; } /* "Pocket" on one line, the app's name below */
 .wordmark-accent { color: var(--brand-teal); }
 
-/* Short screens: a smaller logo and name, so Home still fits. */
-@media (max-height: 700px) {
-  .brand-logo { width: 64px; height: 64px; }
-  .wordmark { font-size: 34px; }
-  #home { gap: 12px; }
-  .scan-btn { height: clamp(80px, 15dvh, 180px); font-size: 44px; }
-}
 
 /* ---- Adjust screen ---- */
 
@@ -503,7 +489,7 @@ html, body {
 
 /* Home screen credit line, just above the version number. */
 .credit {
-  margin: 0 0 -12px;
+  margin: 0;
   font-size: 20px;
   text-align: center;
   color: #6B7280;
@@ -774,7 +760,7 @@ html, body {
 /* ---- Ready for offline (Home screen) ---- */
 
 .offline {
-  margin: 0 0 -8px;
+  margin: 0;
   font-size: 20px;
   text-align: center;
   color: #6B7280;
@@ -784,3 +770,46 @@ html, body {
   font-weight: 700;
 }
 .offline[hidden] { display: none; }
+
+/* ---- Home screen ----
+   Three groups (logo and name / Scan / footer) with the spare space shared
+   out evenly above, between and below them. The screen is never a fixed
+   height, so nothing can ever be cut off: if the phone has less room than
+   expected (big text setting, gesture bar, update banner), js/app.js
+   (fitHome) steps down to a more compact size until it all fits. */
+
+#home {
+  min-height: var(--app-height, 100dvh);
+  justify-content: space-evenly;
+  gap: 16px;
+  /* Extra room at the bottom in case the phone draws its gesture bar over
+     the page; it's only spare space, so it costs nothing on big screens. */
+  padding-bottom: calc(max(40px, env(safe-area-inset-bottom) + 16px) + var(--banner-space, 0px));
+}
+.home-middle,
+.home-foot {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.home-foot { gap: 4px; }
+.scan-btn { font-size: 52px; }
+
+/* Compact steps, used only when the screen is too short for the normal size. */
+#home.fit-1 { gap: 12px; padding-top: 12px; }
+#home.fit-1 .brand { padding-top: 0; }
+#home.fit-1 .brand-logo { width: 64px; height: 64px; }
+#home.fit-1 .wordmark { font-size: 34px; }
+#home.fit-1 .scan-btn { height: 96px; font-size: 44px; }
+
+#home.fit-2 { gap: 8px; padding-top: 8px; padding-bottom: calc(max(24px, env(safe-area-inset-bottom) + 8px) + var(--banner-space, 0px)); }
+#home.fit-2 .brand { padding-top: 0; gap: 4px; }
+#home.fit-2 .brand-logo { width: 48px; height: 48px; }
+#home.fit-2 .wordmark { font-size: 30px; }
+#home.fit-2 .scan-btn { height: 80px; font-size: 40px; border-radius: 22px; }
+#home.fit-2 .message { padding: 8px 12px; font-size: 20px; }
+#home.fit-2 .home-foot { gap: 0; }
+/* Last resort, set by fitHome only when even fit-2 doesn't fit. */
+#home > .brand,
+#home > .home-middle,
+#home > .home-foot { zoom: var(--home-zoom, 1); }

@@ -17,6 +17,7 @@ const VERSION = self.POCKET_PDF_VERSION;
 const $ = (id) => document.getElementById(id);
 
 $('version').textContent = VERSION;
+requestAnimationFrame(() => fitHome());
 
 // ---- Screens ----
 
@@ -24,12 +25,52 @@ const screens = ['home', 'working', 'adjust', 'pages', 'export'];
 function show(name) {
   for (const s of screens) $(s).hidden = s !== name;
   window.scrollTo(0, 0);
+  if (name === 'home') fitHome();
 }
 
 function showMessage(text) {
   $('message').textContent = text;
   $('message').hidden = !text;
+  fitHome();
 }
+
+// ---- Home screen always fits ----
+// Measures the space the phone really shows (after its bars, its text-size
+// setting and the update banner) and, if Home doesn't fit at its normal size,
+// steps down to a more compact one (see 'Home screen' in css/app.css). Runs
+// whenever anything on Home or the screen size changes.
+
+const HOME_STEPS = ['fit-1', 'fit-2'];
+
+function visibleHeight() {
+  const vv = window.visualViewport;
+  return Math.floor(Math.min(window.innerHeight, vv ? vv.height : Infinity));
+}
+
+function fitHome() {
+  const home = $('home');
+  const h = visibleHeight();
+  document.documentElement.style.setProperty('--app-height', h + 'px');
+  if (home.hidden) return;
+  home.classList.remove(...HOME_STEPS);
+  home.style.removeProperty('--home-zoom');
+  let step = 0;
+  while (home.scrollHeight > h + 1 && step < HOME_STEPS.length) home.classList.add(HOME_STEPS[step++]);
+
+  // Last resort (a tiny phone with big text, the banner and a long message):
+  // shrink everything on Home by exactly the amount needed, so it always fits.
+  const cs = getComputedStyle(home);
+  const padding = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
+  for (let tries = 0; home.scrollHeight > h + 1 && tries < 4; tries++) {
+    const zoom = parseFloat(home.style.getPropertyValue('--home-zoom')) || 1;
+    const ratio = (h - padding) / (home.scrollHeight - padding);
+    home.style.setProperty('--home-zoom', String(Math.max(0.4, zoom * ratio * 0.98)));
+  }
+}
+
+window.addEventListener('resize', fitHome);
+if (window.visualViewport) window.visualViewport.addEventListener('resize', fitHome);
+if (document.fonts) document.fonts.ready.then(fitHome);
 
 function showPagesNote(text) {
   $('pages-note').textContent = text;
@@ -286,6 +327,7 @@ async function checkOffline() {
   offlineText.textContent = ready ? '✓ Ready for offline' : 'Getting ready for offline… (stay online)';
   offlineText.classList.toggle('ready', ready);
   offlineText.hidden = false;
+  fitHome();
 }
 
 if ('serviceWorker' in navigator) {
@@ -316,6 +358,7 @@ function reserveBannerSpace() {
   const space = banner.hidden ? 0 : banner.offsetHeight + 16;
   document.documentElement.style.setProperty('--banner-space', space + 'px');
   layoutAdjust();
+  fitHome();
 }
 window.addEventListener('resize', reserveBannerSpace);
 
